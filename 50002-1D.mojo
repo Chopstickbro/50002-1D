@@ -4,6 +4,7 @@
     <src top="true">mojo_top.luc</src>
     <src>shifter.luc</src>
     <ucf lib="true">mojo.ucf</ucf>
+    <ucf lib="true">io_shield.ucf</ucf>
     <component>reset_conditioner.luc</component>
   </files>
 </project>

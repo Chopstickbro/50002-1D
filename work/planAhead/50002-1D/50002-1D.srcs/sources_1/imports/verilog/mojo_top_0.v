@@ -16,16 +16,32 @@ module mojo_top_0 (
     output reg [3:0] spi_channel,
     input avr_tx,
     output reg avr_rx,
-    input avr_rx_busy
+    input avr_rx_busy,
+    output reg [23:0] io_led,
+    output reg [7:0] io_seg,
+    output reg [3:0] io_sel,
+    input [4:0] io_button,
+    input [23:0] io_dip
   );
   
   
   
   reg rst;
   
+  wire [8-1:0] M_shifter_out;
+  reg [6-1:0] M_shifter_alufn;
+  reg [8-1:0] M_shifter_a;
+  reg [8-1:0] M_shifter_b;
+  shifter_1 shifter (
+    .alufn(M_shifter_alufn),
+    .a(M_shifter_a),
+    .b(M_shifter_b),
+    .out(M_shifter_out)
+  );
+  
   wire [1-1:0] M_reset_cond_out;
   reg [1-1:0] M_reset_cond_in;
-  reset_conditioner_1 reset_cond (
+  reset_conditioner_2 reset_cond (
     .clk(clk),
     .in(M_reset_cond_in),
     .out(M_reset_cond_out)
@@ -38,5 +54,14 @@ module mojo_top_0 (
     spi_miso = 1'bz;
     spi_channel = 4'bzzzz;
     avr_rx = 1'bz;
+    io_led = 24'h000000;
+    io_seg = 8'hff;
+    io_sel = 4'hf;
+    M_shifter_a = io_dip[0+7-:8];
+    M_shifter_b = io_dip[8+7-:8];
+    M_shifter_alufn = io_dip[16+0+5-:6];
+    io_led[0+7-:8] = io_dip[0+7-:8];
+    io_led[8+7-:8] = io_dip[8+7-:8];
+    io_led[16+7-:8] = M_shifter_out;
   end
 endmodule
