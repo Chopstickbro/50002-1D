@@ -1,8 +1,0 @@
-INTSTYLE=pa
-INFILE=/home/tianlerk/mojo/50002-1D/work/planAhead/50002-1D/50002-1D.runs/impl_1/mojo_top_0_routed.ncd
-OUTFILE=/home/tianlerk/mojo/50002-1D/work/planAhead/50002-1D/50002-1D.runs/impl_1/mojo_top_0.bit
-FAMILY=Spartan6
-PART=xc6slx9-2tqg144
-WORKINGDIR=/home/tianlerk/mojo/50002-1D/work/planAhead/50002-1D/50002-1D.runs/impl_1
-LICENSE=WebPack
-USER_INFO=211400676_0_0_716
