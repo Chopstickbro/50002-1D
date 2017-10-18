@@ -1,7 +1,7 @@
 module adder (
     input a[8],
     input b[8],
-    input alufn0,
+    input alufn[6],
     output out[8],
     output z,  // 1 when out is all 0
     output v,  // 1 when out overflows
@@ -11,7 +11,7 @@ module adder (
   sig temp[8];
   
   always {
-    if (alufn0 == 0) {
+    if (alufn[0] == 0) {
       temp = a + b;
     } else {
       temp = a - b;
