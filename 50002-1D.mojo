@@ -3,6 +3,7 @@
   <files>
     <src>adder.luc</src>
     <src top="true">mojo_top.luc</src>
+    <src>multiplier.luc</src>
     <src>boolean.luc</src>
     <src>comparator.luc</src>
     <src>shifter.luc</src>
