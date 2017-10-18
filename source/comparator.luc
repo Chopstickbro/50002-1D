@@ -1,0 +1,22 @@
+module comparator (
+    input a[8],
+    input b[8],
+    input alufn[6],
+    output out[8]
+  ) {
+
+  always {
+    out = 8x{0};
+    case(alufn[2:1]) {
+      b01:
+        out[0] = a == b;
+      b10:
+        out[0] = a < b;
+      b11:
+        out[0] = a <= b;
+      default:
+        out[0] = 0;
+        
+      }
+  }
+}
