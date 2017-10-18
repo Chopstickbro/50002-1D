@@ -20,6 +20,7 @@ module mojo_top (
   
   sig rst;                  // reset signal
   shifter shifter;
+  // adder adder;
   
   
   .clk(clk) {
@@ -45,11 +46,18 @@ module mojo_top (
     shifter.a = io_dip[0];
     shifter.b = io_dip[1];
     shifter.alufn = io_dip[2][5:0];
-     
+    
     io_led[0] = io_dip[0];
     io_led[1] = io_dip[1];    
     io_led[2] = shifter.out;   
     
+    // adder.a = io_dip[0];
+    // adder.b = io_dip[1];
+    // adder.alufn0 = io_dip[2][0];
+    // io_led[0] = adder.out;
+    // io_led[1][0] = adder.z;
+    // io_led[1][1] = adder.v;
+    // io_led[1][2] = adder.n;
     
    }
 }

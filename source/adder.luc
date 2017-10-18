@@ -1,0 +1,24 @@
+module adder (
+    input a[8],
+    input b[8],
+    input alufn0,
+    output out[8],
+    output z,  // 1 when out is all 0
+    output v,  // 1 when out overflows
+    output n   // 1 when out is negative
+  ) {
+  
+  sig temp[8];
+  
+  always {
+    if (alufn0 == 0) {
+      temp = a + b;
+    } else {
+      temp = a - b;
+    }
+    out = temp;
+    z = ~|temp;
+    v = (a[7] & b[7] & ~temp[7]) | (~a[7] & ~b[7] & temp[7]);
+    n = temp[7];
+  }
+}
