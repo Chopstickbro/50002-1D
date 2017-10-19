@@ -1,5 +1,7 @@
+//bank of test_cases. Neg == negative num.
+
 module test_cases (
-    input address[3],  // clock
+    input address[3], 
     output out[8],
     output neg
   ) {

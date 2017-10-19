@@ -1,3 +1,5 @@
+//inp generator to generate all possible 2^8 numbers. #NOT USED FOR DEMO
+
 module inp_generator (
     input clk,  // clock
     input rst,  // reset
