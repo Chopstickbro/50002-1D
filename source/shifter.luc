@@ -7,7 +7,7 @@ module shifter (
   
   always {
     case(alufn[1:0]) {
-      b00:
+      b00: 
         out = a << b[4:0];
       b01:
         out = a >> b[4:0];

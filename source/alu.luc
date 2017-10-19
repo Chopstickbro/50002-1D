@@ -25,6 +25,7 @@ module alu (
     v = adder.v;
     case(alufn[5:4]) {
       b00: case (alufn[1:0]) {
+        //sub cases of OPCODES that share 00xxxx
         00: out = adder.out;
         01: out = adder.out;
         10: out = multiplier.out;

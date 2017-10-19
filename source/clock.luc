@@ -1,3 +1,5 @@
+//clock to toggle test_generator to output different test_cases
+
 module clock (
     input clk,    // clock
     input rst,    // reset
