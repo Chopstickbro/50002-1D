@@ -1,0 +1,20 @@
+module inp_generator (
+    input clk,  // clock
+    input rst,  // reset
+    output out[8],
+    output overflow
+  ) {
+  
+  dff counter[9](.clk(clk), .rst(rst));
+
+  always {
+    overflow = 0;
+    out = counter.q[7:0];
+    //reset flip flop when overflow from 8 bit.
+    if (counter.q == b100000000) {
+      overflow = 1;
+      counter.d = 9b0;
+    }
+    counter.d = counter.q+1;
+  }
+}
