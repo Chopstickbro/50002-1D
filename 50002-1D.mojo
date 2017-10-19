@@ -3,7 +3,6 @@
   <files>
     <src>alu.luc</src>
     <src>boolean.luc</src>
-    <src>clock.luc</src>
     <src>test_unit.luc</src>
     <src>multiplier.luc</src>
     <src>inp_generator.luc</src>

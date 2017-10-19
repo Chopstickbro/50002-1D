@@ -6,7 +6,7 @@ module test_generator (
     input rst,  // reset
     output a_out[8],
     output b_out[8],
-    output rotation[4]
+    output rotation[1]
   ) {
   
   test_cases test_cases_a;
@@ -14,8 +14,8 @@ module test_generator (
   
   .clk(clk) {
     .rst(rst) {
-      counter counter_a (#SIZE(7), #DIV(25)); // extra bit to know when it overflows
-      counter counter_b (#SIZE(7), #DIV(28)); 
+      counter counter_a (#SIZE(4), #DIV(25)); 
+      counter counter_b (#SIZE(4), #DIV(28)); // division is 3 bits more so that counter_a can go for 8 cycles before counter_b change
     }
   }
 
@@ -24,6 +24,6 @@ module test_generator (
     test_cases_b.address = counter_b.value[2:0];
     a_out = test_cases_a.out;
     b_out = test_cases_b.out;
-    rotation = counter_b.value[6:3];
+    rotation = counter_b.value[3]; // extra bit to know when it overflows
   }
 }
