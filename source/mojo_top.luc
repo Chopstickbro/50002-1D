@@ -19,20 +19,32 @@ module mojo_top (
   ) {
   
   sig rst;                  // reset signal
-  // shifter shifter;
-  //boolean boolean;
-  //comparator comparator;
-  //adder adder;
-  multiplier multiplier;
   
+  .rst(~rst_n) {
+    clock clock;
+    test_generator test_generator;
+  }
+  
+  alu alu;
+    
   .clk(clk) {
     // The reset conditioner is used to synchronize the reset signal to the FPGA
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
+    edge_detector edge_detector(#RISE(1), #FALL(0));
   }
+  .clk(clk), .rst(~rst_n) {fsm state = {IDLE, TEST_CMPREQ, TEST_CMPLT, TEST_CMPLE, TEST_CMPREQF, TEST_CMPR2F, TEST_CMPR3F, 
+                                       TEST_ADD, TEST_SUB, 
+                                       TEST_AND, TEST_NOR, TEST_OR, TEST_XOR, TEST_LDR,
+                                       TEST_SHL, TEST_SHR, TEST_SRA, 
+                                       TEST_MUL,  
+                                       FAIL, PASS};}
+
+  sig test_val[8];
   
   always {
-      
+    
+    clock.clk = clk;
     reset_cond.in = ~rst_n; // input raw inverted reset signal
     rst = reset_cond.out;   // conditioned reset
     
@@ -44,49 +56,121 @@ module mojo_top (
     io_led = 3x{{8h00}};    // turn LEDs off
     io_seg = 8hff;          // turn segments off
     io_sel = 4hf;           // select no digits
-    /*
-    shifter.a = io_dip[0];
-    shifter.b = io_dip[1];
-    shifter.alufn = io_dip[2][5:0];
     
-    io_led[0] = io_dip[0];
-    io_led[1] = io_dip[1];    
-    io_led[2] = shifter.out;   
-    */
+    alu.alufn = h00;
+    alu.a = h00;
+    alu.b = h00;
     
-    /*
-    adder.a = io_dip[0];
-    adder.b = io_dip[1];
-    adder.alufn = io_dip[2][5:0];
-    io_led[0] = adder.out;
-    io_led[1][0] = adder.z;
-    io_led[1][1] = adder.v;
-    io_led[1][2] = adder.n;
-    */
+    test_generator.clk = clock.trig;
+    edge_detector.in = test_generator.complete; //edge detector to detect rising edge of test_generator.complete signal   
+
+    io_led[0] = test_generator.a_out;
+    io_led[1] = test_generator.b_out;
+    alu.a = test_generator.a_out;
+    alu.b = test_generator.b_out;
+    io_led[2] = alu.out;
     
-    /*
-    boolean.a = io_dip[0];
-    boolean.b = io_dip[1];
-    boolean.alufn = io_dip[2];
-    io_led[0] = io_dip[0];
-    io_led[1] = io_dip[1];
-    io_led[2] = boolean.out;
-    */
+
+    case (state.q) {
+      state.IDLE:
+        io_led[0] = io_dip[0];
+        io_led[1] = io_dip[1];
+        alu.a = io_dip[0];
+        alu.b = io_dip[1];
+        alu.alufn = io_dip[2][5:0];
+        io_led[2] = alu.out;
+        if (io_dip[2][7]) {
+          state.d = state.TEST_CMPREQ;
+        }       
+          
+      state.TEST_CMPREQ:
+        //test equals
+        alu.alufn = h33;
+        if (alu.out != (test_generator.a_out == test_generator.b_out)) state.d = state.FAIL;
+        if (edge_detector.out) state.d = state.TEST_CMPLT;
+        
+      state.TEST_CMPLT:
+        alu.alufn = h35;
+        if (alu.out != (test_generator.a_out < test_generator.b_out)) state.d = state.FAIL;
+        if (edge_detector.out) state.d = state.TEST_CMPLE;
+        
+      state.TEST_CMPLE:
+        alu.alufn = h37;      
+        if (alu.out != (test_generator.a_out <= test_generator.b_out)) state.d = state.FAIL;
+        if (edge_detector.out) state.d = state.TEST_ADD;
+      
+      state.TEST_ADD:
+        alu.alufn = h00;
+        test_val = test_generator.a_out + test_generator.b_out;      
+        if (alu.out != test_val) state.d = state.FAIL;
+        if (edge_detector.out) state.d = state.TEST_SUB;
+        
+      state.TEST_SUB:
+        alu.alufn = h01;
+        test_val = test_generator.a_out - test_generator.b_out;      
+        if (alu.out != test_val) state.d = state.FAIL;
+        if (edge_detector.out) state.d = state.TEST_AND;
+        
+      state.TEST_AND:
+        alu.alufn = h18;
+        test_val = test_generator.a_out & test_generator.b_out;      
+        if (alu.out != test_val) state.d = state.FAIL;
+        if (edge_detector.out) state.d = state.TEST_OR;
+        
+      state.TEST_OR:
+        alu.alufn = h1E;
+        test_val = test_generator.a_out | test_generator.b_out;      
+        if (alu.out != test_val) state.d = state.FAIL;
+        if (edge_detector.out) state.d = state.TEST_XOR;
+        
+      state.TEST_XOR:
+        alu.alufn = h16;
+        test_val = test_generator.a_out ^ test_generator.b_out;      
+        if (alu.out != test_val) state.d = state.FAIL;
+        if (edge_detector.out) state.d = state.TEST_LDR;
+        
+      state.TEST_LDR:
+        alu.alufn = h1A;
+        test_val = test_generator.a_out;
+        if (alu.out != test_val) state.d = state.FAIL;
+        if (edge_detector.out) state.d = state.TEST_SHL;
+        
+      state.TEST_SHL:
+        alu.alufn = h20;
+        test_val = test_generator.a_out << test_generator.b_out[4:0];
+        if (alu.out != test_val) state.d = state.FAIL;
+        if (edge_detector.out) state.d = state.TEST_SHR;
+        
+      state.TEST_SHR:
+        alu.alufn = h21;
+        test_val = test_generator.a_out >> test_generator.b_out[4:0];
+        if (alu.out != test_val) state.d = state.FAIL;
+        if (edge_detector.out) state.d = state.TEST_SRA;
+        
+      state.TEST_SRA:
+        alu.alufn = h23;
+        test_val = $signed(test_generator.a_out) >>> test_generator.b_out[4:0];
+        if (alu.out != test_val) state.d = state.FAIL;
+        if (edge_detector.out) state.d = state.PASS;
+        
+      state.PASS:
+        io_led = 3x{{8hFF}};
+        
+      state.FAIL:
+        io_led[2] = 8hff;
+        
+        //TODO: TEST ZVN cases and TEST ALL FAIL CASES.
+        
+                
+        
+        
+     
+    }
+ 
+       
     
-    /*
-    comparator.a = io_dip[0];
-    comparator.b = io_dip[1];
-    comparator.alufn = io_dip[2];
-    io_led[0] = io_dip[0];
-    io_led[1] = io_dip[1];
-    io_led[2] = comparator.out;
-    */
     
-    multiplier.a = io_dip[0];
-    multiplier.b = io_dip[1];
-    multiplier.alufn = io_dip[2];
-    io_led[0] = io_dip[0];
-    io_led[1] = io_dip[1];
-    io_led[2] = multiplier.out;
+    
+    
    }
 }

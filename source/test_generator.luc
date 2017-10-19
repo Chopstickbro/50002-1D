@@ -1,0 +1,43 @@
+//access test_Cases and outputs test cases at clk period. Complete = 1 when all permutaions of a and b are complete.
+
+module test_generator (
+    input clk,  // clock
+    input rst,  // reset
+    output a_out[8],
+    output b_out[8],
+    output a_neg,
+    output b_neg,
+    output complete
+  ) {
+  
+  sig overflow;
+  
+  test_cases test_cases_a;
+  test_cases test_cases_b;
+  dff a[4](.clk(clk), .rst(rst));
+  dff b[4](.clk(overflow), .rst(rst));
+
+  always {
+    a_neg = test_cases_a.neg;
+    b_neg = test_cases_b.neg;
+    complete = 0;
+    overflow = 0;
+    test_cases_a.address = a.q;
+    a_out = test_cases_a.out;
+    a.d = a.q + 1;
+    
+    test_cases_b.address = b.q;
+    b_out = test_cases_b.out;
+    b.d = b.q + 1;
+    test_cases_b.address = b.q;
+    
+    if (a.q == b1000) {
+      overflow = 1;
+      a.d = 4b0;
+    }
+     if (b.q == b1000) {
+      complete = 1;
+      b.d = 4b0;
+    }
+  }
+}

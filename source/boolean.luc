@@ -13,6 +13,9 @@ module boolean (
       out = a | b;
     4b0110:
       out = a ^ b;
+    4b1010:
+      out = a;
+        
     default:
       out = a;
     }
