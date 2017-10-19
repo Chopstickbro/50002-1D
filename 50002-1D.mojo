@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="50002-1D" board="Mojo V3" language="Lucid">
   <files>
-    <src>boolean.luc</src>
     <src>alu.luc</src>
+    <src>boolean.luc</src>
     <src>clock.luc</src>
+    <src>test_unit.luc</src>
     <src>multiplier.luc</src>
     <src>inp_generator.luc</src>
     <src>test_cases.luc</src>

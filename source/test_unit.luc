@@ -1,0 +1,192 @@
+module test_unit (
+    input clk,  // clock
+    input rst,  // reset
+    input testing,
+    input simulate_error,
+    output operation[6],
+    output out_a[8],
+    output out_b[8],
+    output result[8]
+  ) {
+  
+  sig manual_reset;  
+  sig a[8]; // for convenience
+  sig b[8];
+  sig test_val[8];
+  
+  alu alu;
+  
+  .clk(clk) {
+    .rst(rst) {
+      fsm state = {IDLE, INIT, CLEAN, TEST_CMPREQ, TEST_CMPLT, TEST_CMPLE, TEST_CMPREQF, TEST_CMPR2F, TEST_CMPR3F, 
+        TEST_ADD, TEST_SUB, 
+        TEST_AND, TEST_NOR, TEST_OR, TEST_XOR, TEST_LDR,
+        TEST_SHL, TEST_SHR, TEST_SRA, 
+        TEST_MUL};
+      fsm passfail_machine = {PASS, FAIL};
+      dff previous_a[8];
+      dff previous_b[8];
+      dff previous_out[8];
+      dff previous_op[6];
+    }
+    
+    .rst(manual_reset) {
+      test_generator test_generator;
+    }
+  }
+
+  always {
+    // initialization
+    a = test_generator.a_out;
+    b = test_generator.b_out;
+    out_a = a;
+    out_b = b;
+    alu.alufn = 0;
+    alu.a = a;
+    alu.b = b;
+    operation = 0;
+    result = alu.out;
+  
+    case (testing) {
+      testing == 1:
+        if (state.q == state.IDLE) {
+          state.d = state.INIT; 
+        }
+      testing == 0:
+        state.d = state.IDLE;
+    }
+    
+    case(passfail_machine.q) {
+      passfail_machine.PASS:
+        // memory to display fail case if it fails
+        previous_a.d = a;
+        previous_b.d = b;
+        previous_out.d = alu.out + simulate_error;
+        
+        case (state.q) {
+          
+          state.INIT:
+            manual_reset = 1;
+            state.d = state.CLEAN;
+            
+          state.CLEAN:
+            manual_reset = 0;
+            state.d = state.TEST_CMPREQ;                  
+              
+          state.TEST_CMPREQ:
+            //test ==]
+            operation = h33;
+            previous_op.d = h33;
+            alu.alufn = h33;
+            if ((alu.out + simulate_error) != (a == b)) passfail_machine.d = passfail_machine.FAIL; //if predicate not satisfied: Fail
+            if (test_generator.rotation == 1) state.d = state.TEST_CMPLT; //if test_generator.complete toggle (rising edge) move to next test case
+            
+          state.TEST_CMPLT:
+            //test <
+            operation = h35;
+            previous_op.d = h35;
+            alu.alufn = h35;
+            if (alu.out + simulate_error != (a < b)) passfail_machine.d = passfail_machine.FAIL;
+            if (test_generator.rotation == 2) state.d = state.TEST_CMPLE;
+            
+          state.TEST_CMPLE:
+            //test <=
+            operation = h37;
+            previous_op.d = h37;
+            alu.alufn = h37;      
+            if (alu.out + simulate_error != (a <= b)) passfail_machine.d = passfail_machine.FAIL;
+            if (test_generator.rotation == 3) state.d = state.TEST_ADD;
+          
+          state.TEST_ADD:
+            //test +
+            operation = h00;
+            previous_op.d = h00;
+            alu.alufn = h00;
+            test_val = test_generator.a_out + test_generator.b_out;      
+            if (alu.out + simulate_error != test_val) passfail_machine.d = passfail_machine.FAIL;
+            if (alu.z + simulate_error != ~|test_val) passfail_machine.d = passfail_machine.FAIL;
+            if (alu.v + simulate_error != (a[7] & b[7] & ~test_val[7]) | (~a[7] & ~b[7] & test_val[7])) passfail_machine.d = passfail_machine.FAIL;
+            if (alu.n + simulate_error != test_val[7]) passfail_machine.d = passfail_machine.FAIL;
+            if (test_generator.rotation == 4) state.d = state.TEST_SUB;
+            
+          state.TEST_SUB:
+            //test -
+            operation = h01;
+            previous_op.d = h01;
+            alu.alufn = h01;
+            test_val = test_generator.a_out - test_generator.b_out;      
+            if (alu.out + simulate_error != test_val) passfail_machine.d = passfail_machine.FAIL;
+            if (test_generator.rotation == 5) state.d = state.TEST_AND;
+            
+          state.TEST_AND:
+            //test AND
+            operation = h18;
+            previous_op.d = h18;
+            alu.alufn = h18;
+            test_val = test_generator.a_out & test_generator.b_out;      
+            if (alu.out + simulate_error != test_val) passfail_machine.d = passfail_machine.FAIL;
+            if (test_generator.rotation == 6) state.d = state.TEST_OR;
+            
+          state.TEST_OR:
+            //test OR
+            operation = h1E;
+            previous_op.d = h1E;
+            alu.alufn = h1E;
+            test_val = test_generator.a_out | test_generator.b_out;      
+            if (alu.out + simulate_error != test_val) passfail_machine.d = passfail_machine.FAIL;
+            if (test_generator.rotation == 7) state.d = state.TEST_XOR;
+            
+          state.TEST_XOR:
+            //test XOR
+            operation = h16;
+            previous_op.d = h16;
+            alu.alufn = h16;
+            test_val = test_generator.a_out ^ test_generator.b_out;      
+            if (alu.out + simulate_error != test_val) passfail_machine.d = passfail_machine.FAIL;
+            if (test_generator.rotation == 8) state.d = state.TEST_LDR;
+            
+          state.TEST_LDR:
+            //test "A"
+            operation = h1A;
+            previous_op.d = h1A;
+            alu.alufn = h1A;
+            test_val = test_generator.a_out;
+            if (alu.out + simulate_error != test_val) passfail_machine.d = passfail_machine.FAIL;
+            if (test_generator.rotation == 9) state.d = state.TEST_SHL;
+            
+          state.TEST_SHL:
+            //test Shift Left
+            operation = h20;
+            previous_op.d = h20;
+            alu.alufn = h20;
+            test_val = test_generator.a_out << test_generator.b_out[4:0];
+            if (alu.out + simulate_error != test_val) passfail_machine.d = passfail_machine.FAIL;
+            if (test_generator.rotation == 10) state.d = state.TEST_SHR;
+            
+          state.TEST_SHR:
+            //test Shift Right
+            operation = h21;
+            previous_op.d = h21;
+            alu.alufn = h21;
+            test_val = test_generator.a_out >> test_generator.b_out[4:0];
+            if (alu.out + simulate_error != test_val) passfail_machine.d = passfail_machine.FAIL;
+            if (test_generator.rotation == 11) state.d = state.TEST_SRA;
+            
+          state.TEST_SRA:
+            //test Signed Right Shift
+            operation = h23;
+            previous_op.d = h23;
+            alu.alufn = h23;
+            test_val = $signed(test_generator.a_out) >>> test_generator.b_out[4:0];
+            if (alu.out + simulate_error != test_val) passfail_machine.d = passfail_machine.FAIL;
+            if (test_generator.rotation == 12) state.d = state.INIT;
+        }
+        
+      passfail_machine.FAIL:
+        out_a = previous_a.q;
+        out_b = previous_b.q;
+        result = previous_out.q;
+        operation = previous_op.q;
+    }
+  }
+}

@@ -20,6 +20,7 @@ module mojo_top (
   
   sig rst;                  // reset signal
   sig switchToZVN;
+  sig switchToTestUnit;
   
   alu alu;
     
@@ -28,7 +29,8 @@ module mojo_top (
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
     .rst(rst) {
-      multi_seven_seg seg_alufn (#DIGITS(2));
+      multi_seven_seg seg (#DIGITS(3));
+      test_unit test_unit;
     }
   }
   
@@ -46,6 +48,7 @@ module mojo_top (
     io_sel = 4hf;           // select no digits
     
     switchToZVN = io_button[1]; // when middle button depressed, switch to show z, v and n
+    switchToTestUnit = io_dip[2][6];
     
     // inputs of alu
     alu.alufn = io_dip[2][5:0];
@@ -54,14 +57,11 @@ module mojo_top (
     // show what the inputs are
     io_led[0] = io_dip[0];
     io_led[1] = io_dip[1];
-    // seg.values[0] = 0;
-    // seg.values[1] = 5b11111;
-    seg_alufn.values[0] = io_dip[2][3:0];
-    seg_alufn.values[1] = io_dip[2][5:4];
-    io_seg = ~seg_alufn.seg;
-    io_sel[3:2] = ~seg_alufn.sel;
+    seg.values[0] = io_dip[2][3:0];
+    seg.values[1] = io_dip[2][5:4];
+    io_seg = ~seg.seg;
+    io_sel[3:2] = ~seg.sel[1:0];
     io_sel[1:0] = 2b11;
-    
     
     // outputs of alu
     if (!switchToZVN) {
@@ -71,6 +71,17 @@ module mojo_top (
       io_led[2][1] = alu.v;
       io_led[2][2] = alu.n;
       io_led[2][7:3] = 0;
+    }
+    
+    test_unit.testing = switchToTestUnit;
+    test_unit.simulate_error = io_dip[2][7];
+    // change outputs to what the test unit is doing
+    if (switchToTestUnit) {
+      io_led[0] = test_unit.out_a;
+      io_led[1] = test_unit.out_b;
+      io_led[2] = test_unit.result;
+      seg.values[0] = test_unit.operation[3:0];
+      seg.values[1] = test_unit.operation[5:4];
     }
    }
 }

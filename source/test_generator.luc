@@ -6,38 +6,24 @@ module test_generator (
     input rst,  // reset
     output a_out[8],
     output b_out[8],
-    output a_neg,
-    output b_neg,
-    output complete
+    output rotation[4]
   ) {
-  
-  sig overflow;
   
   test_cases test_cases_a;
   test_cases test_cases_b;
-  dff a[4](.clk(clk), .rst(rst));
-  dff b[4](.clk(overflow), .rst(rst));
+  
+  .clk(clk) {
+    .rst(rst) {
+      counter counter_a (#SIZE(7), #DIV(25)); // extra bit to know when it overflows
+      counter counter_b (#SIZE(7), #DIV(28)); 
+    }
+  }
 
   always {
-    a_neg = test_cases_a.neg;
-    b_neg = test_cases_b.neg;
-    complete = 0;
-    overflow = 0;
-    test_cases_a.address = a.q;
+    test_cases_a.address = counter_a.value[2:0];
+    test_cases_b.address = counter_b.value[2:0];
     a_out = test_cases_a.out;
-    a.d = a.q + 1;
-    
-    test_cases_b.address = b.q;
     b_out = test_cases_b.out;
-    b.d = b.q + 1;
-    
-    if (a.q == b1000) {
-      overflow = 1;
-      a.d = 4b0;
-    }
-     if (b.q == b1000) {
-      complete = 1;
-      b.d = 4b0;
-    }
+    rotation = counter_b.value[6:3];
   }
 }
