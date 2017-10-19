@@ -70,7 +70,7 @@ module mojo_top (
     alu.b = test_generator.b_out;
     io_led[2] = alu.out;
     
-
+    /*
     case (state.q) {
       state.IDLE:
         //manual testing
@@ -86,13 +86,13 @@ module mojo_top (
         }       
           
       state.TEST_CMPREQ:
-        //test equals
+        //test ==
         alu.alufn = h33;
         if (alu.out != (test_generator.a_out == test_generator.b_out)) state.d = state.FAIL; //if predicate not satisfied: Fail
         if (edge_detector.out) state.d = state.TEST_CMPLT; //if test_generator.complete toggle (rising edge) move to next test case
         
       state.TEST_CMPLT:
-        //test =
+        //test <
         alu.alufn = h35;
         if (alu.out != (test_generator.a_out < test_generator.b_out)) state.d = state.FAIL;
         if (edge_detector.out) state.d = state.TEST_CMPLE;
@@ -175,17 +175,6 @@ module mojo_top (
         io_led[2] = 8hff;
         
         //TODO: TEST ZVN cases and TEST ALL FAIL CASES.
-        
-                
-        
-        
-     
-    }
- 
-       
-    
-    
-    
-    
+     }*/
    }
 }

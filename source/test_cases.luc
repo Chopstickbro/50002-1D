@@ -10,13 +10,13 @@ module test_cases (
     case (address) {
 
       0: out = hFF; neg = 0; //255
-      1: out = h80; neg = 0;//128
-      2: out = h07; neg = 0;//7 (8b0111)
-      3: out = h01; neg = 0;//1
-      4: out = h00; neg = 0;//0
-      5: out = -h01; neg = 1;//-1
-      6: out = -h07; neg = 1;//-7
-      7: out = -h80; neg = 1;//-128
+      1: out = h80; neg = 0; //128
+      2: out = h07; neg = 0; //7 (8b0111)
+      3: out = h01; neg = 0; //1
+      4: out = h00; neg = 0; //0
+      5: out = -h01; neg = 1; //-1
+      6: out = -h07; neg = 1; //-7
+      7: out = -h80; neg = 1; //-128
         
       default:
         out = h00; neg = 0;

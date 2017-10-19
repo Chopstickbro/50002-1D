@@ -1,4 +1,5 @@
-//access test_Cases and outputs test cases at clk period. Complete = 1 when all permutaions of a and b are complete.
+//access test_Cases and outputs test cases at clk period. 
+//Complete = 1 when all permutaions of a and b are complete.
 
 module test_generator (
     input clk,  // clock
@@ -29,7 +30,6 @@ module test_generator (
     test_cases_b.address = b.q;
     b_out = test_cases_b.out;
     b.d = b.q + 1;
-    test_cases_b.address = b.q;
     
     if (a.q == b1000) {
       overflow = 1;
