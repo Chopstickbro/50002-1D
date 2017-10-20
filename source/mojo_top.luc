@@ -19,11 +19,12 @@ module mojo_top (
   ) {
   
   sig rst;                  // reset signal
-  
-  .rst(~rst_n) {
-    clock clock;
-    test_generator test_generator;
-  }
+  sig switchToZVN;
+  sig switchToTestUnit;
+  sig displayOutput[8];
+  sig displayz[1];
+  sig displayn[1];
+  sig displayv[1];
   
   alu alu;
     
@@ -31,20 +32,13 @@ module mojo_top (
     // The reset conditioner is used to synchronize the reset signal to the FPGA
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
-    edge_detector edge_detector(#RISE(1), #FALL(0));
+    .rst(rst) {
+      multi_seven_seg seg (#DIGITS(3));
+      test_unit test_unit;
+    }
   }
-  .clk(clk), .rst(~rst_n) {fsm state = {IDLE, TEST_CMPREQ, TEST_CMPLT, TEST_CMPLE, TEST_CMPREQF, TEST_CMPR2F, TEST_CMPR3F, 
-                                       TEST_ADD, TEST_SUB, 
-                                       TEST_AND, TEST_NOR, TEST_OR, TEST_XOR, TEST_LDR,
-                                       TEST_SHL, TEST_SHR, TEST_SRA, 
-                                       TEST_MUL,  
-                                       FAIL, PASS};}
-
-  sig test_val[8]; //signal to hold 8 bit test values for comparison
   
   always {
-    
-    clock.clk = clk;
     reset_cond.in = ~rst_n; // input raw inverted reset signal
     rst = reset_cond.out;   // conditioned reset
     
@@ -57,135 +51,48 @@ module mojo_top (
     io_seg = 8hff;          // turn segments off
     io_sel = 4hf;           // select no digits
     
-    alu.alufn = h00; //reset alu
-    alu.a = h00;
-    alu.b = h00;
+    switchToZVN = io_button[1];
+    switchToTestUnit = io_dip[2][6];
     
-    test_generator.clk = clock.trig;
-    edge_detector.in = test_generator.complete; //edge detector to detect rising edge of test_generator.complete signal   
-
-    io_led[0] = test_generator.a_out;
-    io_led[1] = test_generator.b_out;
-    alu.a = test_generator.a_out;
-    alu.b = test_generator.b_out;
-    io_led[2] = alu.out;
+    // inputs of alu
+    alu.alufn = io_dip[2][5:0];
+    alu.a = io_dip[0];
+    alu.b = io_dip[1];
+    // show what the inputs are
+    io_led[0] = io_dip[0];
+    io_led[1] = io_dip[1];
+    seg.values[0] = io_dip[2][3:0];
+    seg.values[1] = io_dip[2][5:4];
+    io_seg = ~seg.seg;
+    io_sel[3:2] = ~seg.sel[1:0];
+    io_sel[1:0] = 2b11;
+    displayOutput = alu.out;
+    displayz = alu.z;
+    displayv = alu.v;
+    displayn = alu.n;
     
-
-    case (state.q) {
-      state.IDLE:
-        //manual testing
-        io_led[0] = io_dip[0];
-        io_led[1] = io_dip[1];
-        alu.a = io_dip[0];
-        alu.b = io_dip[1];
-        alu.alufn = io_dip[2][5:0];
-        io_led[2] = alu.out;
-        //switch to auto testing
-        if (io_dip[2][7]) {
-          state.d = state.TEST_CMPREQ;
-        }       
-          
-      state.TEST_CMPREQ:
-        //test equals
-        alu.alufn = h33;
-        if (alu.out != (test_generator.a_out == test_generator.b_out)) state.d = state.FAIL; //if predicate not satisfied: Fail
-        if (edge_detector.out) state.d = state.TEST_CMPLT; //if test_generator.complete toggle (rising edge) move to next test case
-        
-      state.TEST_CMPLT:
-        //test =
-        alu.alufn = h35;
-        if (alu.out != (test_generator.a_out < test_generator.b_out)) state.d = state.FAIL;
-        if (edge_detector.out) state.d = state.TEST_CMPLE;
-        
-      state.TEST_CMPLE:
-        //test <=
-        alu.alufn = h37;      
-        if (alu.out != (test_generator.a_out <= test_generator.b_out)) state.d = state.FAIL;
-        if (edge_detector.out) state.d = state.TEST_ADD;
-      
-      state.TEST_ADD:
-        //test +
-        alu.alufn = h00;
-        test_val = test_generator.a_out + test_generator.b_out;      
-        if (alu.out != test_val) state.d = state.FAIL;
-        if (edge_detector.out) state.d = state.TEST_SUB;
-        
-      state.TEST_SUB:
-        //test -
-        alu.alufn = h01;
-        test_val = test_generator.a_out - test_generator.b_out;      
-        if (alu.out != test_val) state.d = state.FAIL;
-        if (edge_detector.out) state.d = state.TEST_AND;
-        
-      state.TEST_AND:
-        //test AND
-        alu.alufn = h18;
-        test_val = test_generator.a_out & test_generator.b_out;      
-        if (alu.out != test_val) state.d = state.FAIL;
-        if (edge_detector.out) state.d = state.TEST_OR;
-        
-      state.TEST_OR:
-        //test OR
-        alu.alufn = h1E;
-        test_val = test_generator.a_out | test_generator.b_out;      
-        if (alu.out != test_val) state.d = state.FAIL;
-        if (edge_detector.out) state.d = state.TEST_XOR;
-        
-      state.TEST_XOR:
-        //test XOR
-        alu.alufn = h16;
-        test_val = test_generator.a_out ^ test_generator.b_out;      
-        if (alu.out != test_val) state.d = state.FAIL;
-        if (edge_detector.out) state.d = state.TEST_LDR;
-        
-      state.TEST_LDR:
-        //test "A"
-        alu.alufn = h1A;
-        test_val = test_generator.a_out;
-        if (alu.out != test_val) state.d = state.FAIL;
-        if (edge_detector.out) state.d = state.TEST_SHL;
-        
-      state.TEST_SHL:
-        //test Shift Left
-        alu.alufn = h20;
-        test_val = test_generator.a_out << test_generator.b_out[4:0];
-        if (alu.out != test_val) state.d = state.FAIL;
-        if (edge_detector.out) state.d = state.TEST_SHR;
-        
-      state.TEST_SHR:
-        //test Shift Right
-        alu.alufn = h21;
-        test_val = test_generator.a_out >> test_generator.b_out[4:0];
-        if (alu.out != test_val) state.d = state.FAIL;
-        if (edge_detector.out) state.d = state.TEST_SRA;
-        
-      state.TEST_SRA:
-        //test Signed Right Shift
-        alu.alufn = h23;
-        test_val = $signed(test_generator.a_out) >>> test_generator.b_out[4:0];
-        if (alu.out != test_val) state.d = state.FAIL;
-        if (edge_detector.out) state.d = state.PASS;
-        
-      state.PASS:
-        //test Pass: Light up all LEDs
-        io_led = 3x{{8hFF}};
-        
-      state.FAIL:
-        //test Fail: Light up LED Bank 2
-        io_led[2] = 8hff;
-        
-        //TODO: TEST ZVN cases and TEST ALL FAIL CASES.
-        
-                
-        
-        
-     
+    test_unit.simulate_error = io_dip[2][7];
+    // change outputs to what the test unit is doing
+    if (switchToTestUnit) {
+      io_led[0] = test_unit.out_a;
+      io_led[1] = test_unit.out_b;
+      seg.values[0] = test_unit.operation[3:0];
+      seg.values[1] = test_unit.operation[5:4];
+      displayOutput = test_unit.result;
+      displayz = test_unit.out_z;
+      displayv = test_unit.out_v;
+      displayn = test_unit.out_n;
     }
- 
-       
     
-    
-    
-    
+    // show result when button not pressed
+    // show z, v and n when button pressed
+    if (!switchToZVN) {
+      io_led[2] = displayOutput;
+    } else {
+      io_led[2][0] = displayz;
+      io_led[2][1] = displayv;
+      io_led[2][2] = displayn;
+      io_led[2][7:3] = 0;
+    }
    }
 }
