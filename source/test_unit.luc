@@ -23,7 +23,7 @@ module test_unit (
         TEST_ADD, TEST_SUB, 
         TEST_AND, TEST_NOR, TEST_OR, TEST_XOR, TEST_LDR,
         TEST_SHL, TEST_SHR, TEST_SRA, 
-        TEST_MUL};
+        TEST_MUL, TEST_DIV};
       fsm passfail_machine = {PASS, FAIL};
       // memory to show fail case in case of failure
       dff previous_a[8];
@@ -211,6 +211,18 @@ module test_unit (
             previous_op.d = h23;
             alu.alufn = h23;
             test_val = $signed(test_generator.a_out) >>> test_generator.b_out[4:0];
+            if (alu.out + simulate_error != test_val) passfail_machine.d = passfail_machine.FAIL;
+            if (test_generator.rotation == ~cycle_count.q) {
+              state.d = state.TEST_DIV;
+              cycle_count.d = ~cycle_count.q;
+            }
+            
+            state.TEST_DIV:
+            //test division
+            operation = h03;
+            previous_op.d = h03;
+            alu.alufn = h03;
+            test_val = a / b;
             if (alu.out + simulate_error != test_val) passfail_machine.d = passfail_machine.FAIL;
             if (test_generator.rotation == ~cycle_count.q) {
               state.d = state.TEST_CMPREQ;
