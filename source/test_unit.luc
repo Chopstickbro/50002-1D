@@ -46,7 +46,7 @@ module test_unit (
     out_a = a;
     out_b = b;
     alu.alufn = 0;
-    alu.a = a + simulate_error;
+    alu.a = a;
     alu.b = b;
     operation = 0;
     result = alu.out;
@@ -62,7 +62,7 @@ module test_unit (
         previous_z.d = alu.z;
         previous_v.d = alu.v;
         previous_n.d = alu.n;
-        previous_out.d = alu.out;
+        previous_out.d = alu.out+simulate_error;
         
         /* 
           1. output operation
@@ -78,7 +78,7 @@ module test_unit (
             operation = h33;
             previous_op.d = h33;
             alu.alufn = h33;
-            if (alu.out != (a == b)) passfail_machine.d = passfail_machine.FAIL; //if predicate not satisfied: Fail
+            if (alu.out +simulate_error!= (a == b)) passfail_machine.d = passfail_machine.FAIL; //if predicate not satisfied: Fail
             if (test_generator.rotation == ~cycle_count.q) {
               state.d = state.TEST_CMPLT;
               cycle_count.d = ~cycle_count.q;
@@ -89,7 +89,7 @@ module test_unit (
             operation = h35;
             previous_op.d = h35;
             alu.alufn = h35;
-            if (alu.out != (a < b)) passfail_machine.d = passfail_machine.FAIL;
+            if (alu.out+simulate_error != (a < b)) passfail_machine.d = passfail_machine.FAIL;
             if (test_generator.rotation == ~cycle_count.q) {
               state.d = state.TEST_CMPLE;
               cycle_count.d = ~cycle_count.q;
@@ -100,7 +100,7 @@ module test_unit (
             operation = h37;
             previous_op.d = h37;
             alu.alufn = h37;      
-            if (alu.out != (a <= b)) passfail_machine.d = passfail_machine.FAIL;
+            if (alu.out+simulate_error != (a <= b)) passfail_machine.d = passfail_machine.FAIL;
             if (test_generator.rotation == ~cycle_count.q) {
               state.d = state.TEST_ADD;
               cycle_count.d = ~cycle_count.q;
@@ -112,10 +112,10 @@ module test_unit (
             previous_op.d = h00;
             alu.alufn = h00;
             test_val = test_generator.a_out + test_generator.b_out;      
-            if (alu.out != test_val) passfail_machine.d = passfail_machine.FAIL;
-            if (alu.z != ~|test_val) passfail_machine.d = passfail_machine.FAIL;
-            if (alu.v != (a[7] & b[7] & ~test_val[7]) | (~a[7] & ~b[7] & test_val[7])) passfail_machine.d = passfail_machine.FAIL;
-            if (alu.n != test_val[7]) passfail_machine.d = passfail_machine.FAIL;
+            if (alu.out+simulate_error != test_val) passfail_machine.d = passfail_machine.FAIL;
+            if (alu.z+simulate_error != ~|test_val) passfail_machine.d = passfail_machine.FAIL;
+            if (alu.v+simulate_error != (a[7] & b[7] & ~test_val[7]) | (~a[7] & ~b[7] & test_val[7])) passfail_machine.d = passfail_machine.FAIL;
+            if (alu.n+simulate_error != test_val[7]) passfail_machine.d = passfail_machine.FAIL;
             if (test_generator.rotation == ~cycle_count.q) {
               state.d = state.TEST_SUB;
               cycle_count.d = ~cycle_count.q;
@@ -127,7 +127,7 @@ module test_unit (
             previous_op.d = h01;
             alu.alufn = h01;
             test_val = test_generator.a_out - test_generator.b_out;      
-            if (alu.out != test_val) passfail_machine.d = passfail_machine.FAIL;
+            if (alu.out+simulate_error != test_val) passfail_machine.d = passfail_machine.FAIL;
             if (test_generator.rotation == ~cycle_count.q) {
               state.d = state.TEST_AND;
               cycle_count.d = ~cycle_count.q;
@@ -139,7 +139,7 @@ module test_unit (
             previous_op.d = h18;
             alu.alufn = h18;
             test_val = test_generator.a_out & test_generator.b_out;      
-            if (alu.out != test_val) passfail_machine.d = passfail_machine.FAIL;
+            if (alu.out+simulate_error != test_val) passfail_machine.d = passfail_machine.FAIL;
             if (test_generator.rotation == ~cycle_count.q) {
               state.d = state.TEST_OR;
               cycle_count.d = ~cycle_count.q;
